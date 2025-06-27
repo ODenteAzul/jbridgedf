@@ -1,5 +1,11 @@
 # JBridgeDF
 
+[![PyPI version](https://img.shields.io/pypi/v/jbridgedf.svg)](https://pypi.org/project/jbridgedf/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Tests](https://img.shields.io/badge/tests-passing-brightgreen)](https://github.com/seuusuario/jbridgedf/actions)
+[![Python](https://img.shields.io/badge/python-3.7+-blue.svg)](https://www.python.org/)
+
+
 **Bridge JSON APIs into clean, time-aware DataFrames.**
 
 `JBridgeDF` is a lightweight Python library that simplifies the process of retrieving and transforming JSON data from APIs into tidy `pandas` DataFrames — ready for analysis or time series modeling.
@@ -15,6 +21,11 @@
 - Designed for public data APIs (like Central Bank, IBGE, FRED, etc.)
 
 ## 📦 Installation
+
+You can install JBridgeDF directly from PyPI:
+
+```bash
+pip install jbridgedf
 
 ```bash
 pip install -e .

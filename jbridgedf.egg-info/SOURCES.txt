@@ -9,3 +9,4 @@ jbridgedf.egg-info/dependency_links.txt
 jbridgedf.egg-info/requires.txt
 jbridgedf.egg-info/top_level.txt
 tests/test_parser.py
+tests/test_parser_extended.py
