@@ -209,9 +209,15 @@ class APIDataParser():
 
                 df[col_freq] = pd.to_datetime(df[col_freq])
 
+                dayfirst = False
+                if date_format:
+                    format_lower = date_format.lower()
+                    if format_lower.startswith("%d"):
+                        dayfirst = True
+
                 if date_format:
                     df[col_freq] = pd.to_datetime(
-                        df[col_freq], format=date_format, errors="coerce")
+                        df[col_freq], format=date_format, dayfirst=dayfirst, errors="coerce")
 
                 if frequency == "monthly":
                     df[col_freq] = df[col_freq].dt.to_period(
