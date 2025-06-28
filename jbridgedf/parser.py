@@ -222,35 +222,33 @@ class APIDataParser():
                 clean_data = [{k: d.get(k, None) for k in cols}
                               for d in json_data]
 
-            if is_list:
-                df = pd.json_normalize(clean_data)
-            else:
-                df = pd.DataFrame(clean_data)
+            df = pd.json_normalize(
+                clean_data) if is_list else pd.DataFrame(clean_data)
 
-            if not df.empty:
-                if sanitize:
-                    df.dropna(axis=1, how="all", inplace=True)
-                    num_cols = df.select_dtypes(include="number").columns
-                    df[num_cols] = df[num_cols].fillna(0)
+            if df.empty:
+                return None
 
-                # Handle 'timestamp' column first
-                if "timestamp" in df.columns and convert_timestamp:
-                    df["data"] = pd.to_datetime(
-                        pd.to_numeric(df["timestamp"]), unit="s")
+            if sanitize:
+                df.dropna(axis=1, how="all", inplace=True)
+                num_cols = df.select_dtypes(include="number").columns
+                df[num_cols] = df[num_cols].fillna(0)
 
-                # Apply datetime conversion if frequency column exists
-                if col_freq in df.columns:
-                    # Safe conversion considering format and dayfirst
-                    if date_format:
-                        format_lower = date_format.lower()
-                        dayfirst = format_lower.startswith("%d")
-                        df[col_freq] = pd.to_datetime(
-                            df[col_freq], format=date_format, dayfirst=dayfirst, errors="coerce")
-                    else:
-                        df[col_freq] = pd.to_datetime(
-                            df[col_freq], errors="coerce")
+            # Handle 'timestamp' column
+            if "timestamp" in df.columns and convert_timestamp:
+                df["data"] = pd.to_datetime(
+                    pd.to_numeric(df["timestamp"]), unit="s")
 
-                    # Infer frequency before converting to .date
+            if col_freq in df.columns:
+                # Centralized date handling
+                df = self._convert_date_column(
+                    df, col_freq=col_freq, date_format=date_format, return_as_string=return_as_string
+                )
+
+                # Only infer/apply frequency if not returning strings
+                if not return_as_string:
+                    df[col_freq] = pd.to_datetime(
+                        df[col_freq], errors="coerce")  # needed for .dt
+
                     if frequency == "auto":
                         interval = df[col_freq].sort_values(
                         ).diff().dt.days.median()
@@ -263,22 +261,16 @@ class APIDataParser():
                         self.logger.info(
                             f"Date frequency inferred: {frequency}")
 
-                    # Apply frequency adjustments BEFORE converting to .date
                     if frequency == "monthly":
                         df[col_freq] = df[col_freq].dt.to_period(
                             "M").dt.to_timestamp()
                     elif frequency == "quarterly":
                         df[col_freq] = df[col_freq].dt.to_period(
                             "Q").dt.to_timestamp()
-
-                    # Now safely convert to final format
-                    df = self._convert_date_column(
-                        df, col_freq=col_freq, date_format=date_format, return_as_string=return_as_string
-                    )
-                else:
-                    self.logger.warning(
-                        f"Frequency column '{col_freq}' not found.")
-                    return df
+            else:
+                self.logger.warning(
+                    f"Frequency column '{col_freq}' not found.")
+                return df
 
             if date_as_index and col_freq in df.columns:
                 df.set_index(col_freq, inplace=True)

@@ -1,3 +1,3 @@
 from .parser import APIDataParser
 
-__version__ = "0.1.4"
+__version__ = "0.1.5"
