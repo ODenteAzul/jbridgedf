@@ -114,19 +114,60 @@ class APIDataParser():
             self.logger.error(f"Fail at JSON decoding: {e}")
             return None
 
-    def _parse_json_to_df(
-            self,
-            json_data,
-            cols=None,
-            is_list: bool = False,
-            convert_timestamp: bool = True,
-            sanitize: bool = True,
-            frequency: str = 'daily',
-            col_freq="data",
-            date_as_index: bool = False,
-            date_format: str = None) -> pd.DataFrame:
+    def _convert_date_column(
+        self,
+        df: pd.DataFrame,
+        col_freq: str,
+        date_format: str = None,
+        return_as_string: bool = False
+    ) -> pd.DataFrame:
         """
-        Converts a structured JSON in a pd.DataFrame, treating columns, data and Null Values.
+        Converts a date column in a DataFrame with robust parsing,
+        optional formatting, and invalid date handling.
+
+        Args:
+            df (pd.DataFrame): DataFrame containing the date column.
+            col_freq (str): Name of the date column to be converted.
+            date_format (str, optional): Desired output format (e.g., "%d/%m/%Y").
+                                        Only applied if `return_as_string` is True.
+            return_as_string (bool, optional): If True, returns dates as formatted strings.
+                                            If False, returns Python `datetime.date` objects
+                                            (recommended for inserting into SQL DATE columns).
+
+        Returns:
+            DataFrame with the converted and cleaned date column.
+        """
+        try:
+            df[col_freq] = pd.to_datetime(df[col_freq], errors="coerce")
+
+            df = df[df[col_freq].notna()]
+
+            if return_as_string and date_format:
+                df[col_freq] = df[col_freq].dt.strftime(date_format)
+            else:
+                df[col_freq] = df[col_freq].dt.date
+
+            return df
+        except Exception as e:
+            self.logger.error(
+                f"Error in formating DateTime column: {e}")
+            return None
+
+    def _parse_json_to_df(
+        self,
+        json_data,
+        cols=None,
+        is_list: bool = False,
+        convert_timestamp: bool = True,
+        sanitize: bool = True,
+        frequency: str = 'daily',
+        col_freq="data",
+        date_as_index: bool = False,
+        date_format: str = None,
+        return_as_string: bool = False
+    ) -> pd.DataFrame:
+        """
+        Parses structured JSON data into a pandas DataFrame, handling columns, null values, and optional time series transformation.
 
         Parameters
         ----------
@@ -207,17 +248,8 @@ class APIDataParser():
                         self.logger.info(
                             f"Date frequency inferred: {frequency}")
 
-                df[col_freq] = pd.to_datetime(df[col_freq])
-
-                dayfirst = False
-                if date_format:
-                    format_lower = date_format.lower()
-                    if format_lower.startswith("%d"):
-                        dayfirst = True
-
-                if date_format:
-                    df[col_freq] = pd.to_datetime(
-                        df[col_freq], format=date_format, dayfirst=dayfirst, errors="coerce")
+                df = self._convert_date_column(
+                    df, col_freq=col_freq, date_format=date_format, return_as_string=return_as_string)
 
                 if frequency == "monthly":
                     df[col_freq] = df[col_freq].dt.to_period(
@@ -249,7 +281,9 @@ class APIDataParser():
                      date_as_index: bool = False,
                      http_get_timeout: int = 10,
                      date_format: str = None,
-                     data_key: str = None):
+                     data_key: str = None,
+                     return_as_string: bool = False
+                     ) -> pd.DataFrame:
         """
         Sends an HTTP GET request to the specified URL and parses the JSON response into a DataFrame.
 
@@ -312,7 +346,8 @@ class APIDataParser():
                 frequency=frequency,
                 col_freq=col_freq,
                 date_as_index=date_as_index,
-                date_format=date_format)
+                date_format=date_format,
+                return_as_string=return_as_string)
 
             return df
 
