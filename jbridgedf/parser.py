@@ -321,8 +321,8 @@ class APIDataParser():
             If you want to enforce a standat data format
 
         data_key: str, default= None
-            If you know the JSON structure is not flat ou list, but instead the correct dict is inside
-            a data_key word, you can inform it here, the parser will look after it.
+            If the JSON structure is nested (not flat or a direct list), specify the key where
+            the relevant data is located. The parser will extract it from this key.
 
         Returns
         -------

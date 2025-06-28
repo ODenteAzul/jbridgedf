@@ -1,5 +1,6 @@
 LICENSE
 README.md
+pyproject.toml
 setup.py
 jbridgedf/__init__.py
 jbridgedf/parser.py
