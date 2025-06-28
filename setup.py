@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="jbridgedf",
-    version="0.1.0",
+    version="0.1.1",
     description="Bridge JSON APIs into clean, time-aware DataFrames.",
     author="Luis Felipe de Moraes",
     author_email="luis.felipe@email.com",

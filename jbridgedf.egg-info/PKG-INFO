@@ -1,6 +1,6 @@
 Metadata-Version: 2.4
 Name: jbridgedf
-Version: 0.1.0
+Version: 0.1.1
 Summary: Bridge JSON APIs into clean, time-aware DataFrames.
 Author: Luis Felipe de Moraes
 Author-email: luis.felipe@email.com
