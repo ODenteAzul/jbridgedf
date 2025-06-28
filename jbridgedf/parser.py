@@ -138,19 +138,26 @@ class APIDataParser():
             DataFrame with the converted and cleaned date column.
         """
         try:
-            df[col_freq] = pd.to_datetime(df[col_freq], errors="coerce")
+            if date_format:
+                format_lower = date_format.lower()
+                dayfirst = format_lower.startswith("%d")
+                df[col_freq] = pd.to_datetime(
+                    df[col_freq], format=date_format, dayfirst=dayfirst, errors="coerce")
+            else:
+                df[col_freq] = pd.to_datetime(df[col_freq], errors="coerce")
 
             df = df[df[col_freq].notna()]
 
             if return_as_string and date_format:
                 df[col_freq] = df[col_freq].dt.strftime(date_format)
             else:
+                # Retorna datetime.date, sem tentar chamar .date() novamente
                 df[col_freq] = df[col_freq].dt.date
 
             return df
         except Exception as e:
             self.logger.error(
-                f"Error in formating DateTime column: {e}")
+                f"Error in formatting DateTime column: {e}")
             return None
 
     def _parse_json_to_df(
