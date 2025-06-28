@@ -233,39 +233,52 @@ class APIDataParser():
                     num_cols = df.select_dtypes(include="number").columns
                     df[num_cols] = df[num_cols].fillna(0)
 
+                # Handle 'timestamp' column first
                 if "timestamp" in df.columns and convert_timestamp:
-                    df["data"] = pd.to_datetime(pd.to_numeric(
-                        df["timestamp"]), unit="s").dt.date
+                    df["data"] = pd.to_datetime(
+                        pd.to_numeric(df["timestamp"]), unit="s")
 
-                    if col_freq in df.columns:
-                        df[col_freq] = pd.to_datetime(df[col_freq])
+                # Apply datetime conversion if frequency column exists
+                if col_freq in df.columns:
+                    # Safe conversion considering format and dayfirst
+                    if date_format:
+                        format_lower = date_format.lower()
+                        dayfirst = format_lower.startswith("%d")
+                        df[col_freq] = pd.to_datetime(
+                            df[col_freq], format=date_format, dayfirst=dayfirst, errors="coerce")
                     else:
-                        self.logger.warning(
-                            f"Frequency column '{col_freq}' not found.")
-                        return df
+                        df[col_freq] = pd.to_datetime(
+                            df[col_freq], errors="coerce")
 
+                    # Infer frequency before converting to .date
                     if frequency == "auto":
-                        interval = df[col_freq].diff().dt.days.median()
-
+                        interval = df[col_freq].sort_values(
+                        ).diff().dt.days.median()
                         if interval >= 80:
                             frequency = "quarterly"
                         elif interval >= 27:
                             frequency = "monthly"
-
+                        else:
+                            frequency = "daily"
                         self.logger.info(
                             f"Date frequency inferred: {frequency}")
 
-                df = self._convert_date_column(
-                    df, col_freq=col_freq, date_format=date_format, return_as_string=return_as_string)
+                    # Apply frequency adjustments BEFORE converting to .date
+                    if frequency == "monthly":
+                        df[col_freq] = df[col_freq].dt.to_period(
+                            "M").dt.to_timestamp()
+                    elif frequency == "quarterly":
+                        df[col_freq] = df[col_freq].dt.to_period(
+                            "Q").dt.to_timestamp()
 
-                if frequency == "monthly":
-                    df[col_freq] = df[col_freq].dt.to_period(
-                        "M").dt.to_timestamp()
-                elif frequency == "quarterly":
-                    df[col_freq] = df[col_freq].dt.to_period(
-                        "Q").dt.to_timestamp()
-                elif frequency == "daily":
-                    pass
+                    # Now safely convert to final format
+                    df = self._convert_date_column(
+                        df, col_freq=col_freq, date_format=date_format, return_as_string=return_as_string
+                    )
+                else:
+                    self.logger.warning(
+                        f"Frequency column '{col_freq}' not found.")
+                    return df
 
             if date_as_index and col_freq in df.columns:
                 df.set_index(col_freq, inplace=True)
