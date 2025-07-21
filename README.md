@@ -1,6 +1,7 @@
 # JBridgeDF
 
 [![PyPI version](https://img.shields.io/pypi/v/jbridgedf.svg)](https://pypi.org/project/jbridgedf/)
+[![PyPI Downloads](https://static.pepy.tech/badge/jbridgedf)](https://pepy.tech/projects/jbridgedf)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Tests](https://img.shields.io/badge/tests-passing-brightgreen)](https://github.com/seuusuario/jbridgedf/actions)
 [![Python](https://img.shields.io/badge/python-3.7+-blue.svg)](https://www.python.org/)
